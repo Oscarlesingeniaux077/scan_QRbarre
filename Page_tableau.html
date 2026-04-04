@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tableau de relève de données</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 30px;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .actions {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #e5edff;
+    }
+
+    th.priority-col,
+    td.priority-col {
+      background: #fff7d6;
+    }
+
+    th.priority-col {
+      color: #92400e;
+    }
+
+    td input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    td input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .info-priorite {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-left: 4px solid #f59e0b;
+      background: #fffbeb;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .priority-input {
+      background: #fffdf2;
+      border: 1px solid #f59e0b;
+      font-weight: bold;
+    }
+
+    .delete-btn {
+      background: #dc2626;
+      padding: 8px 12px;
+    }
+
+    .delete-btn:hover {
+      background: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tableau de relève de données</h1>
+
+    <div class="actions">
+      <button onclick="ajouterLigne()">Ajouter une ligne</button>
+      <button onclick="enregistrerDonnees()">Enregistrer</button>
+    </div>
+
+    <div class="info-priorite">
+      <strong>Priorité de saisie :</strong> les colonnes 3 et 4 sont dédiées à la relève de données et sont mises en avant pour faciliter le remplissage.
+    </div>
+
+    <table id="monTableau">
+      <thead>
+        <tr>
+          <th>Colonne 1</th>
+          <th>Colonne 2</th>
+          <th class="priority-col">Colonne 3 - Relevé prioritaire</th>
+          <th class="priority-col">Colonne 4 - Relevé prioritaire</th>
+          <th>Colonne 5</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" placeholder="Valeur 1" /></td>
+          <td><input type="text" placeholder="Valeur 2" /></td>
+          <td class="priority-col"><input type="text" class="priority-input" placeholder="Relevé 1" /></td>
+          <td class="priority-col"><input type="text" class="priority-input" placeholder="Relevé 2" /></td>
+          <td><input type="text" placeholder="Valeur 5" /></td>
+          <td><button class="delete-btn" onclick="supprimerLigne(this)">Supprimer</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function ajouterLigne() {
+      const tbody = document.querySelector('#monTableau tbody');
+      const ligne = document.createElement('tr');
+
+      ligne.innerHTML = `
+        <td><input type="text" placeholder="Valeur 1" /></td>
+        <td><input type="text" placeholder="Valeur 2" /></td>
+        <td class="priority-col"><input type="text" class="priority-input" placeholder="Relevé 1" /></td>
+        <td class="priority-col"><input type="text" class="priority-input" placeholder="Relevé 2" /></td>
+        <td><input type="text" placeholder="Valeur 5" /></td>
+        <td><button class="delete-btn" onclick="supprimerLigne(this)">Supprimer</button></td>
+      `;
+
+      tbody.appendChild(ligne);
+    }
+
+    function enregistrerDonnees() {
+      const lignes = document.querySelectorAll('#monTableau tbody tr');
+      const donnees = [];
+
+      lignes.forEach((ligne) => {
+        const inputs = ligne.querySelectorAll('input');
+        donnees.push({
+          colonne1: inputs[0].value,
+          colonne2: inputs[1].value,
+          relevePrioritaire1: inputs[2].value,
+          relevePrioritaire2: inputs[3].value,
+          colonne5: inputs[4].value
+        });
+      });
+
+      localStorage.setItem('tableauReleveDonnees', JSON.stringify(donnees));
+      alert('Les données ont été enregistrées localement dans le navigateur.');
+    }
+
+    function chargerDonnees() {
+      const donneesSauvegardees = localStorage.getItem('tableauReleveDonnees');
+      if (!donneesSauvegardees) return;
+
+      const tbody = document.querySelector('#monTableau tbody');
+      const donnees = JSON.parse(donneesSauvegardees);
+      tbody.innerHTML = '';
+
+      donnees.forEach((ligneDonnee) => {
+        const ligne = document.createElement('tr');
+        ligne.innerHTML = `
+          <td><input type="text" placeholder="Valeur 1" value="${ligneDonnee.colonne1 || ''}" /></td>
+          <td><input type="text" placeholder="Valeur 2" value="${ligneDonnee.colonne2 || ''}" /></td>
+          <td class="priority-col"><input type="text" class="priority-input" placeholder="Relevé 1" value="${ligneDonnee.relevePrioritaire1 || ''}" /></td>
+          <td class="priority-col"><input type="text" class="priority-input" placeho
+
+    function supprimerLigne(bouton) {
+      const ligne = bouton.parentElement.parentElement;
+      ligne.remove();
+    }
+  </script>
+</body>
+</html>

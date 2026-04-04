@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner de code-barres</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f8;
+      color: #222;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    }
+
+    video {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+      border: 2px solid #ddd;
+      background: black;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #0b6;
+      word-break: break-word;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #555;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #0078d4;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Scanner de code-barres</h1>
+    <p>Autorisez l'accès à la caméra puis présentez un code-barres devant l'objectif.</p>
+
+    <video id="video" autoplay playsinline></video>
+    <div id="result">Aucun code détecté</div>
+    <div id="status">En attente...</div>
+    <button id="startBtn">Démarrer le scan</button>
+  </div>
+
+  <script>
+    const video = document.getElementById("video");
+    const result = document.getElementById("result");
+    const statusText = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+
+    let stream = null;
+    let scanning = false;
+
+    async function startScanner() {
+      if (!("BarcodeDetector" in window)) {
+        statusText.textContent = "Votre navigateur ne prend pas en charge BarcodeDetector.";
+        result.textContent = "Utilisez un navigateur compatible.";
+        return;
+      }
+
+      try {
+        const supportedFormats = await BarcodeDetector.getSupportedFormats();
+        const detector = new BarcodeDetector({
+          formats: supportedFormats
+        });
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" }
+          }
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        statusText.textContent = "Caméra active. Scan en cours...";
+        scanning = true;
+
+        const scan = async () => {
+          if (!scanning) return;
+
+          try {
+            const barcodes = await detector.detect(video);
+
+            if (barcodes.length > 0) {
+              const code = barcodes[0];
+              result.textContent = `Code détecté : ${code.rawValue}`;
+              statusText.textContent = `Format : ${code.format}`;
+            }
+          } catch (err) {
+            statusText.textContent = "Erreur pendant la détection.";
+            console.error(err);
+          }
+
+          requestAnimationFrame(scan);
+        };
+
+        scan();
+
+      } catch (err) {
+        statusText.textContent = "Impossible d'accéder à la caméra.";
+        result.textContent = "Vérifiez les permissions navigateur.";
+        console.error(err);
+      }
+    }
+
+    startBtn.addEventListener("click", startScanner);
+
+    window.addEventListener("beforeunload", () => {
+      scanning = false;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    });
+  </script>
+</body>
+</html>
